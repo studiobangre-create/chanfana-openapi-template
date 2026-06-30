@@ -6,6 +6,8 @@ import { getAuth } from "./auth";
 import { paymentsRouter } from "./endpoints/payments/router";
 import { webhooksRouter } from "./endpoints/webhooks/router";
 import { adminRouter } from "./endpoints/admin/router";
+import { requestLogger } from "./middleware/requestLogger";
+import { rootLogger } from "./lib/logger";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -27,6 +29,7 @@ const browserCors = () =>
 		allowHeaders: ["Content-Type", "Authorization"],
 	});
 
+app.use("*", requestLogger());
 app.use("/api/auth/**", browserCors());
 app.use("/admin/**", browserCors());
 
@@ -37,7 +40,17 @@ app.onError((err, c) => {
 			err.status as ContentfulStatusCode,
 		);
 	}
-	console.error("Unhandled error:", err);
+	// onError context is untyped — safe cast to retrieve the request-scoped logger if set
+	const log = (c as unknown as { get(k: string): unknown }).get("logger");
+	const activeLog = log instanceof Object && "error" in log
+		? (log as typeof rootLogger)
+		: rootLogger;
+	activeLog.error("unhandled error", {
+		error: err instanceof Error ? err.message : String(err),
+		stack: err instanceof Error ? err.stack : undefined,
+		method: c.req.method,
+		path: new URL(c.req.url).pathname,
+	});
 	return c.json(
 		{ success: false, errors: [{ code: 7000, message: "Internal Server Error" }] },
 		500,
