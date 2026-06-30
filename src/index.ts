@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import { getAuth } from "./auth";
+import { HealthCheck } from "./endpoints/health";
 import { paymentsRouter } from "./endpoints/payments/router";
 import { webhooksRouter } from "./endpoints/webhooks/router";
 import { adminRouter } from "./endpoints/admin/router";
@@ -75,10 +76,8 @@ const openapi = fromHono(app, {
 	},
 });
 
-// app.route() bypasses chanfana's Proxy and calls Hono's route() with the correct
-// `this` binding. chanfana's openapi.route() loses `this` on Hono's non-arrow
-// `route` method, crashing with "Cannot read properties of undefined (reading 'basePath')".
-app.route("/v1/payments", paymentsRouter);
+openapi.get("/health", HealthCheck);
+openapi.route("/v1/payments", paymentsRouter);
 app.route("/webhooks", webhooksRouter);
 app.route("/admin", adminRouter);
 
