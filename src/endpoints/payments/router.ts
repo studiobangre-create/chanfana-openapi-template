@@ -19,4 +19,4 @@ payments.post("/:id/capture", CapturePayment);
 payments.post("/:id/refund", RefundPayment);
 payments.post("/:id/cancel", CancelPayment);
 
-export { payments as paymentsRouter };
+export { app as paymentsRouter };

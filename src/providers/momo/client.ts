@@ -43,7 +43,7 @@ export interface DepositStatusResponse {
 		amount: string;
 		currency: string;
 		country: string;
-		payer: { type: string; accountDetails: { phoneNUmber: string; provider: string } };
+		payer: { type: string; accountDetails: { phoneNumber: string; provider: string } };
 		customerMessage?: string;
 		clientReferenceId?: string;
 		created: string;

@@ -21,8 +21,12 @@ function evaluateRules(
 	rules: RoutingRule[],
 	params: { currency: string; amount: number },
 ): string | null {
+	let defaultRoute: string | null = null;
 	for (const rule of rules) {
-		if (rule.default) return rule.default;
+		if (rule.default && !defaultRoute) {
+			defaultRoute = rule.default;
+			continue;
+		}
 		if (!rule.if || !rule.use) continue;
 		const { currency, amount_lte, amount_gte } = rule.if;
 		if (currency && currency !== params.currency) continue;
@@ -30,7 +34,7 @@ function evaluateRules(
 		if (amount_gte !== undefined && params.amount < amount_gte) continue;
 		return rule.use;
 	}
-	return null;
+	return defaultRoute;
 }
 
 export async function resolveProvider(
@@ -111,6 +115,26 @@ export async function getPaymentById(
 	return row ? deserializePayment(row) : null;
 }
 
+export async function getPaymentWithProviderSlug(
+	db: D1Database,
+	id: string,
+	organizationId: string,
+): Promise<{ payment: Payment; providerSlug: string } | null> {
+	const row = await db
+		.prepare(
+			`SELECT pay.*, pr.slug AS provider_slug
+       FROM payments pay
+       JOIN providers pr ON pr.id = pay.provider_id
+       WHERE pay.id = ? AND pay.organization_id = ?`,
+		)
+		.bind(id, organizationId)
+		.first<PaymentRow & { provider_slug: string }>();
+
+	if (!row) return null;
+	const { provider_slug, ...paymentRow } = row;
+	return { payment: deserializePayment(paymentRow), providerSlug: provider_slug };
+}
+
 export async function getPaymentByIdempotencyKey(
 	db: D1Database,
 	key: string,
@@ -156,11 +180,10 @@ export async function insertPayment(
 
 export async function updatePaymentStatus(
 	db: D1Database,
-	id: string,
-	organizationId: string,
+	payment: Payment,
 	status: PaymentStatus,
 	providerRef?: string,
-): Promise<Payment | null> {
+): Promise<Payment> {
 	const now = new Date().toISOString();
 	await db
 		.prepare(
@@ -168,8 +191,13 @@ export async function updatePaymentStatus(
        SET status = ?, provider_ref = COALESCE(?, provider_ref), updated_at = ?
        WHERE id = ? AND organization_id = ?`,
 		)
-		.bind(status, providerRef ?? null, now, id, organizationId)
+		.bind(status, providerRef ?? null, now, payment.id, payment.organization_id)
 		.run();
 
-	return getPaymentById(db, id, organizationId);
+	return {
+		...payment,
+		status,
+		provider_ref: providerRef ?? payment.provider_ref,
+		updated_at: now,
+	};
 }

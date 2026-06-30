@@ -2,7 +2,7 @@ import { contentJson, OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import type { HandleArgs } from "../../types";
 import { PaymentIdParam, PaymentSchema } from "./schemas";
-import { getPaymentById, getProviderSlug, loadProvider, updatePaymentStatus } from "./service";
+import { getPaymentWithProviderSlug, loadProvider, updatePaymentStatus } from "./service";
 
 export class CapturePayment extends OpenAPIRoute<HandleArgs> {
 	schema = {
@@ -33,10 +33,11 @@ export class CapturePayment extends OpenAPIRoute<HandleArgs> {
 		const organizationId = c.get("apiKey").key.referenceId;
 		const log = c.get("logger").with({ orgId: organizationId, paymentId: data.params.id });
 
-		const payment = await getPaymentById(c.env.DB, data.params.id, organizationId);
-		if (!payment) {
+		const found = await getPaymentWithProviderSlug(c.env.DB, data.params.id, organizationId);
+		if (!found) {
 			return c.json({ success: false as const, error: "Payment not found" }, 404);
 		}
+		const { payment, providerSlug } = found;
 		if (payment.status !== "authorized") {
 			log.warn("payment.capture_rejected", { currentStatus: payment.status });
 			return c.json(
@@ -45,19 +46,17 @@ export class CapturePayment extends OpenAPIRoute<HandleArgs> {
 			);
 		}
 
-		const slug = await getProviderSlug(c.env.DB, payment.provider_id);
-		const provider = await loadProvider(c.env.PSP_CREDENTIALS, slug, organizationId, log.with({ provider: slug }));
+		const provider = await loadProvider(c.env.PSP_CREDENTIALS, providerSlug, organizationId, log.with({ provider: providerSlug }));
 
 		const result = await provider.capture({ providerRef: payment.provider_ref! });
 		const updated = await updatePaymentStatus(
 			c.env.DB,
-			payment.id,
-			organizationId,
+			payment,
 			result.status,
 			result.providerRef,
 		);
 
-		log.info("payment.captured", { provider: slug, status: updated?.status });
-		return c.json({ success: true as const, result: updated! }, 200);
+		log.info("payment.captured", { provider: providerSlug, status: updated.status });
+		return c.json({ success: true as const, result: updated }, 200);
 	}
 }
