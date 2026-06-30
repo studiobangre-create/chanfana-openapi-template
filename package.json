@@ -16,6 +16,8 @@
 		"publish": true
 	},
 	"dependencies": {
+		"@better-auth/api-key": "^1.6.23",
+		"better-auth": "^1.6.23",
 		"chanfana": "2.8.3",
 		"hono": "4.11.1",
 		"zod": "3.25.67"
