@@ -3,11 +3,11 @@ import type { Logger } from "../lib/logger";
 import { createPawaPayProvider } from "./momo";
 import { createWaveProvider } from "./wave";
 
-// Credentials are fetched from KV: key = "psp_creds:{slug}:{organizationId}"
+// Credentials come from env secrets (shared across all orgs).
 // Each provider expects a JSON string with its own shape — see provider implementations.
 //
-// pawapay: { "apiToken": "...", "baseUrl": "https://api.pawapay.io" }
-// wave:    { "apiKey": "wave_sn_prod_...", "signingSecret": "wave_sn_AKS_..." }
+// PAWAPAY_CREDENTIALS: { "apiToken": "...", "baseUrl": "https://api.pawapay.io" }
+// WAVE_CREDENTIALS:    { "apiKey": "wave_sn_prod_...", "signingSecret": "wave_sn_AKS_..." }
 export function getProvider(slug: string, credentials: string, log?: Logger): PaymentProvider {
 	switch (slug) {
 		case "pawapay":

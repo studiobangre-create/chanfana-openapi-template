@@ -1,6 +1,7 @@
 import { fromHono } from "chanfana";
 import { Hono } from "hono";
 import { requireApiKey } from "../../middleware/requireApiKey";
+import { rateLimitByApiKey } from "../../middleware/rateLimit";
 import { CancelPayment } from "./cancel";
 import { CapturePayment } from "./capture";
 import { CreatePayment } from "./create";
@@ -10,6 +11,7 @@ import { RefundPayment } from "./refund";
 const app = new Hono<{ Bindings: Env }>();
 
 app.use("*", requireApiKey);
+app.use("*", rateLimitByApiKey);
 
 const payments = fromHono(app);
 

@@ -46,7 +46,7 @@ export class CapturePayment extends OpenAPIRoute<HandleArgs> {
 			);
 		}
 
-		const provider = await loadProvider(c.env.PSP_CREDENTIALS, providerSlug, organizationId, log.with({ provider: providerSlug }));
+		const provider = loadProvider(c.env, providerSlug, log.with({ provider: providerSlug }));
 
 		const result = await provider.capture({ providerRef: payment.provider_ref! });
 		const updated = await updatePaymentStatus(

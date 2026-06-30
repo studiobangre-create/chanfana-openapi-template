@@ -47,7 +47,7 @@ export class RefundPayment extends OpenAPIRoute<HandleArgs> {
 			);
 		}
 
-		const provider = await loadProvider(c.env.PSP_CREDENTIALS, providerSlug, organizationId, log.with({ provider: providerSlug }));
+		const provider = loadProvider(c.env, providerSlug, log.with({ provider: providerSlug }));
 
 		const result = await provider.refund({
 			providerRef: payment.provider_ref!,

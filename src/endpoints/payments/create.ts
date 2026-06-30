@@ -59,7 +59,7 @@ export class CreatePayment extends OpenAPIRoute<HandleArgs> {
 		}
 
 		const providerLog = log.with({ provider: resolved.providerSlug });
-		const provider = await loadProvider(c.env.PSP_CREDENTIALS, resolved.providerSlug, organizationId, providerLog);
+		const provider = loadProvider(c.env, resolved.providerSlug, providerLog);
 		const result = await provider.charge({ amount, currency, metadata });
 
 		const payment = await insertPayment(c.env.DB, {

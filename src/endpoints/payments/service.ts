@@ -85,15 +85,16 @@ export async function getProviderSlug(db: D1Database, providerId: string): Promi
 
 // ── Credentials ───────────────────────────────────────────────────────────────
 
-export async function loadProvider(
-	kv: KVNamespace,
-	providerSlug: string,
-	organizationId: string,
-	log?: Logger,
-): Promise<PaymentProvider> {
-	const credentials = await kv.get(`psp_creds:${providerSlug}:${organizationId}`);
+const PROVIDER_CREDENTIAL_KEYS: Record<string, keyof Env> = {
+	pawapay: "PAWAPAY_CREDENTIALS",
+	wave: "WAVE_CREDENTIALS",
+};
+
+export function loadProvider(env: Env, providerSlug: string, log?: Logger): PaymentProvider {
+	const envKey = PROVIDER_CREDENTIAL_KEYS[providerSlug];
+	const credentials = envKey ? env[envKey] as string : undefined;
 	if (!credentials) {
-		throw Object.assign(new Error(`No credentials found for provider "${providerSlug}"`), {
+		throw Object.assign(new Error(`No credentials configured for provider "${providerSlug}"`), {
 			status: 422,
 		});
 	}
