@@ -1,10 +1,22 @@
+import { fromHono } from "chanfana";
 import { Hono } from "hono";
 import { requireApiKey } from "../../middleware/requireApiKey";
+import { CancelPayment } from "./cancel";
+import { CapturePayment } from "./capture";
+import { CreatePayment } from "./create";
+import { GetPayment } from "./get";
+import { RefundPayment } from "./refund";
 
-const payments = new Hono<{ Bindings: Env }>();
+const app = new Hono<{ Bindings: Env }>();
 
-payments.use("*", requireApiKey);
+app.use("*", requireApiKey);
 
-// Phase 2: payment endpoints will be registered here
+const payments = fromHono(app);
+
+payments.post("/", CreatePayment);
+payments.get("/:id", GetPayment);
+payments.post("/:id/capture", CapturePayment);
+payments.post("/:id/refund", RefundPayment);
+payments.post("/:id/cancel", CancelPayment);
 
 export { payments as paymentsRouter };

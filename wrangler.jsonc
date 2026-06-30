@@ -1,7 +1,8 @@
 {
 	"compatibility_date": "2025-10-08",
+	"compatibility_flags": ["nodejs_compat"],
 	"main": "src/index.ts",
-	"name": "psp-proxy",
+	"name": "chanfana-openapi-template",
 	"upload_source_maps": true,
 	"observability": {
 		"enabled": true
@@ -18,7 +19,7 @@
 			// Stores PSP credentials (API keys, secrets) per org+provider
 			// Create with: wrangler kv namespace create PSP_CREDENTIALS
 			"binding": "PSP_CREDENTIALS",
-			"id": "REPLACE_WITH_KV_NAMESPACE_ID"
+			"id": "d0c4e18a57b44abe9100b6ef7010f2e6"
 		}
 	]
 	// Required secrets — set with: wrangler secret put <NAME>
