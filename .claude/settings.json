@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.better-auth.com)",
+      "Bash(bun add *)",
+      "WebFetch(domain:better-auth.com)",
+      "Bash(npx tsc *)",
+      "Bash(grep -v \"^$\")"
+    ]
+  }
+}
